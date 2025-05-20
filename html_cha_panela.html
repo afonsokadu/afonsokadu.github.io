@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chá de Panela da Larissa e Kadu</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; background-color: #f8f0f2; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        header { text-align: center; margin-bottom: 30px; border-bottom: 2px dashed #e8a0bf; padding-bottom: 20px; }
+        header h1 { color: #d14587; margin-bottom: 5px; }
+        .lista-presentes { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 25px; }
+        .item-presente { border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; background-color: #fff; transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; display: flex; flex-direction: column; justify-content: space-between; }
+        .item-presente:hover:not(.item-presenteado) { transform: translateY(-5px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+        .item-presente img {
+            max-width: 100%;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+        }
+        .item-presente h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #d14587; min-height: 44px; }
+        .item-presente .descricao-item { font-size: 0.9em; color: #666; margin-bottom: 10px; min-height: 30px; }
+        .item-presente .valor-sugerido-item { font-size: 0.95em; color: #333; font-weight: bold; margin-bottom: 10px; }
+        .btn-abrir-modal-pix, .btn-confirmar-presente { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; text-decoration: none; font-size: 0.95em; cursor: pointer; transition: background-color 0.3s; display: block; width: calc(100% - 30px); margin: 5px auto; }
+        .btn-abrir-modal-pix:hover { background-color: #45a049; }
+        .link-loja { font-size:0.9em; color:#555; margin-top: 8px; display: block; word-break: break-all;}
+        .item-presenteado { background-color: #f0f0f0; opacity: 0.8; }
+        .item-presenteado img { filter: grayscale(80%); }
+        .item-presenteado .btn-abrir-modal-pix { background-color: #aaa; cursor: not-allowed; pointer-events: none; }
+        .status-presenteado { font-weight: bold; color: #d14587; background-color: #e8f5e9; padding: 8px; border-radius: 4px; margin: 10px auto 5px auto; border: 1px solid #c8e6c9; display: inline-block; }
+        .quem-presenteou { font-size: 0.85em; color: #555; margin-top: 5px; }
+        footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px dashed #e8a0bf; color: #777; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); animation: fadeIn 0.3s; }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 550px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-content h2 { color: #d14587; margin-top: 0; }
+        .modal-content #pix-key-display-modal { font-weight: bold; color: #333; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin: 15px 0; display: inline-block; border: 1px dashed #ccc; word-break: break-all; }
+        .close-btn { color: #aaa; float: right; font-size: 32px; font-weight: bold; line-height: 0.5; }
+        .close-btn:hover, .close-btn:focus { color: black; text-decoration: none; cursor: pointer; }
+        .copy-feedback { display: none; color: green; font-size: 0.9em; margin-top: 5px; }
+        .form-gifter-name { margin-top: 20px; }
+        .form-gifter-name label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        .form-gifter-name input[type="text"] { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 15px; }
+        .btn-copiar-pix-modal { background-color: #5c2d91; color: white; margin-bottom: 15px; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #d14587; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #statusMessage { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Chá de Panela da Larissa e Kadu</h1> <p>Celebre conosco este momento especial! <br>Se desejar nos presentear, preparamos uma lista com carinho.</p>
+            <p>Nossa chave PIX para os presentes é: <strong>14876938776</strong> (CPF)</p> <p style="font-size:0.9em; color:#777;">Após escolher um item e realizar o PIX, por favor, preencha seu nome e marque-o como presenteado para nos ajudar a controlar a lista. Muito obrigado!</p>
+        </header>
+
+        <div id="loaderLista" class="loader" style="display: block;"></div>
+        <div class="lista-presentes" id="listaPresentes">
+            </div>
+
+        <footer>
+            <p>Agradecemos imensamente sua presença e seu carinho!</p>
+        </footer>
+    </div>
+
+    <div id="pixConfirmModal" class="modal">
+        <div class="modal-content"> <span class="close-btn" onclick="fecharModal()">&times;</span>
+            <h2 id="modalItemName">Nome do Item</h2>
+            <p>Para presentear com este item, utilize a chave PIX abaixo no seu aplicativo do banco:</p>
+            <p><strong>Chave PIX:</strong> <span id="pix-key-display-modal"></span></p> <p><strong>Valor Sugerido:</strong> <span id="modalItemValue"></span></p> <p><strong>Nome do Favorecido:</strong> <span id="modalFavorecidoNome"></span></p> <button onclick="copiarChavePixModal(CHAVE_PIX_GLOBAL)" class="btn-abrir-modal-pix btn-copiar-pix-modal">Copiar Chave PIX</button>
+            <div id="copyFeedbackModal" class="copy-feedback">Chave PIX copiada!</div>
+
+            <div class="form-gifter-name">
+                <label for="gifterName">Seu nome (para o agradecimento):</label>
+                <input type="text" id="gifterName" name="gifterName" placeholder="Digite seu nome completo">
+                <input type="hidden" id="hiddenItemId">
+            </div>
+            <div id="modalLoader" class="loader"></div>
+            <div id="statusMessage"></div>
+            <button onclick="confirmarPresente()" class="btn-abrir-modal-pix btn-confirmar-presente">Já fiz o PIX e quero marcar como presenteado!</button>
+        </div> </div>
+
+    <script>
+        // --- CONFIGURAÇÕES IMPORTANTES ---
+        const CHAVE_PIX_GLOBAL = "14876938776";
+        const NOME_FAVORECIDO_PIX = "Carlos Eduardo da Silva Afonso";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwetomzwk0DiyPrDdOLDwiZz_nmE3vJz4plcUrjG-wcWqfv-5G7VuUGAtEj7_p1QrHEmA/exec";
+        // --- FIM DAS CONFIGURAÇÕES ---
+
+        // Declaração das variáveis de elemento DOM
+        let listaPresentesDiv, loaderLista, modal, modalItemNameEl, modalItemValueEl, modalPixKeyEl, modalFavorecidoNomeEl;
+        let gifterNameInput, hiddenItemIdInput, copyFeedbackModalEl, modalLoader, statusMessageEl;
+
+        let itensDaLista = [];
+
+        async function carregarItens() {
+            if (loaderLista) loaderLista.style.display = 'block';
+            if (listaPresentesDiv) listaPresentesDiv.innerHTML = '';
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const result = await response.json();
+                if (loaderLista) loaderLista.style.display = 'none';
+
+                if (result.success && result.items) {
+                    itensDaLista = result.items;
+                    renderizarItens(itensDaLista);
+                } else {
+                    if (listaPresentesDiv) listaPresentesDiv.innerHTML = `<p style="text-align:center; color:red;">Erro ao carregar a lista de presentes: ${result.error || 'Não foi possível buscar os itens.'}</p>`;
+                    console.error("Erro ao buscar itens do Apps Script:", result);
+                }
+            } catch (error) {
+                if (loaderLista) loaderLista.style.display = 'none';
+                if (listaPresentesDiv) listaPresentesDiv.innerHTML = `<p style="text-align:center; color:red;">Erro de conexão ao carregar a lista. Verifique a URL do Script e a implantação. Tente recarregar a página.</p>`;
+                console.error("Erro na requisição fetch para carregarItens:", error);
+            }
+        }
+
+        function renderizarItens(itens) {
+            if (!listaPresentesDiv) { console.error("listaPresentesDiv não encontrado"); return; }
+            listaPresentesDiv.innerHTML = '';
+            if (!itens || itens.length === 0) {
+                 listaPresentesDiv.innerHTML = `<p style="text-align:center;">Nenhum item na lista ou falha ao carregar.</p>`;
+                 return;
+            }
+            itens.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('item-presente');
+                itemDiv.dataset.itemId = item.id;
+
+                if (item.status === "Presenteado") {
+                    itemDiv.classList.add('item-presenteado');
+                }
+
+                let acaoHtml = '';
+                if (item.status === "Presenteado") {
+                    acaoHtml = `
+                        <div class="status-presenteado">Já Presenteado!</div>
+                        ${item.presenteadoPor ? `<p class="quem-presenteou">Por: ${item.presenteadoPor}</p>` : ''}
+                    `;
+                } else {
+                    acaoHtml = `
+                        <button class="btn-abrir-modal-pix" onclick="abrirModalConfirmacao('${item.id}', '${item.nome}', '${item.valorSugerido || 'Livre'}')">
+                            Quero Presentear!
+                        </button>
+                    `;
+                }
+                const imagemSrc = item.imagem && String(item.imagem).trim() !== '' ? String(item.imagem).trim() : 'https://via.placeholder.com/200x180.png?text=Imagem+Indisponível';
+                itemDiv.innerHTML = `
+                    <img src="${imagemSrc}" alt="${item.nome}" onerror="this.onerror=null;this.src='https://via.placeholder.com/200x180.png?text=Erro+ao+carregar';this.alt='Erro ao carregar imagem';">
+                    <h3>${item.nome}</h3>
+                    ${item.valorSugerido ? `<p class="valor-sugerido-item">Valor Sugerido: ${item.valorSugerido}</p>` : ''}
+                    <div class="acoes-item">
+                        ${acaoHtml}
+                    </div>
+                    ${item.linkLoja ? `<a href="${item.linkLoja}" target="_blank" rel="noopener noreferrer" class="link-loja">Ver na loja</a>` : ''}
+                `;
+                listaPresentesDiv.appendChild(itemDiv);
+            });
+        }
+
+        function abrirModalConfirmacao(itemId, itemName, itemValue) {
+            if (modalItemNameEl) modalItemNameEl.textContent = itemName;
+            if (modalItemValueEl) modalItemValueEl.textContent = itemValue;
+            if (modalPixKeyEl) modalPixKeyEl.textContent = CHAVE_PIX_GLOBAL;
+            if (modalFavorecidoNomeEl) modalFavorecidoNomeEl.textContent = NOME_FAVORECIDO_PIX;
+            if (hiddenItemIdInput) hiddenItemIdInput.value = itemId;
+            if (gifterNameInput) gifterNameInput.value = '';
+            if (statusMessageEl) {
+                statusMessageEl.textContent = '';
+                statusMessageEl.style.color = '';
+            }
+            if (copyFeedbackModalEl) copyFeedbackModalEl.style.display = 'none';
+            if (modalLoader) modalLoader.style.display = 'none';
+            
+            const confirmarBtn = document.querySelector('#pixConfirmModal .btn-confirmar-presente'); // Seletor mais específico
+            if (confirmarBtn) confirmarBtn.disabled = false;
+            
+            if (modal) modal.style.display = "block";
+        }
+
+        function fecharModal() {
+            if (modal) modal.style.display = "none";
+        }
+
+        function copiarChavePixModal(chave) {
+            navigator.clipboard.writeText(chave).then(() => {
+                if (copyFeedbackModalEl) {
+                    copyFeedbackModalEl.textContent = 'Chave PIX copiada!';
+                    copyFeedbackModalEl.style.display = 'block';
+                }
+                setTimeout(() => {
+                    if (copyFeedbackModalEl) copyFeedbackModalEl.style.display = 'none';
+                }, 2000);
+            }).catch(err => {
+                if (copyFeedbackModalEl) {
+                    copyFeedbackModalEl.textContent = 'Erro ao copiar. Por favor, copie manualmente.';
+                    copyFeedbackModalEl.style.display = 'block';
+                }
+                console.error('Erro ao copiar a chave PIX: ', err);
+            });
+        }
+
+        async function confirmarPresente() {
+            const itemId = hiddenItemIdInput ? hiddenItemIdInput.value : null;
+            const gifterName = gifterNameInput ? gifterNameInput.value.trim() : null;
+
+            if (!gifterName) {
+                if (statusMessageEl) {
+                    statusMessageEl.textContent = "Por favor, digite seu nome.";
+                    statusMessageEl.style.color = "red";
+                }
+                if (gifterNameInput) gifterNameInput.focus();
+                return;
+            }
+
+            if (modalLoader) modalLoader.style.display = 'block';
+            if (statusMessageEl) statusMessageEl.textContent = 'Processando...';
+            const confirmarBtn = document.querySelector('#pixConfirmModal .btn-confirmar-presente'); // Seletor mais específico
+            if (confirmarBtn) confirmarBtn.disabled = true;
+
+            try {
+                console.log("Enviando para SCRIPT_URL:", SCRIPT_URL);
+                console.log("Dados enviados:", JSON.stringify({ itemId: itemId, gifterName: gifterName }));
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify({ itemId: itemId, gifterName: gifterName })
+                });
+
+                console.log("Resposta recebida, status:", response.status, response.statusText);
+                const textResponse = await response.text();
+                console.log("Texto da resposta:", textResponse);
+                let result;
+                try {
+                    result = JSON.parse(textResponse);
+                } catch (e) {
+                    console.error("Erro ao parsear JSON da resposta do Apps Script:", textResponse, e);
+                    if (statusMessageEl) {
+                        statusMessageEl.textContent = "Erro de comunicação (resposta inválida do servidor).";
+                        statusMessageEl.style.color = "red";
+                    }
+                    if (confirmarBtn) confirmarBtn.disabled = false;
+                    return;
+                }
+
+                if (result.success) {
+                    if (statusMessageEl) {
+                        statusMessageEl.textContent = "Obrigado! Item marcado como presenteado.";
+                        statusMessageEl.style.color = "green";
+                    }
+                    const itemIndex = itensDaLista.findIndex(item => item.id === itemId);
+                    if (itemIndex > -1) {
+                        itensDaLista[itemIndex].status = "Presenteado";
+                        itensDaLista[itemIndex].presenteadoPor = gifterName;
+                        renderizarItens(itensDaLista);
+                    }
+                    setTimeout(() => {
+                        fecharModal();
+                    }, 2500);
+                } else {
+                    if (statusMessageEl) {
+                        statusMessageEl.textContent = `Erro: ${result.message || result.error || 'Não foi possível marcar o item.'}`;
+                        statusMessageEl.style.color = "red";
+                    }
+                    if (confirmarBtn) confirmarBtn.disabled = false;
+                }
+            } catch (error) { // Este 'error' é o "Failed to fetch"
+                console.error("Erro na função confirmarPresente (bloco catch principal):", error.message, error.stack, error);
+                if (statusMessageEl) {
+                    statusMessageEl.textContent = "Erro de conexão ao marcar o item. Verifique o console (F12) para detalhes.";
+                    statusMessageEl.style.color = "red";
+                }
+                if (confirmarBtn) confirmarBtn.disabled = false;
+            } finally {
+                if (modalLoader) modalLoader.style.display = 'none';
+            }
+        }
+
+        window.onclick = function(event) {
+            if (modal && event.target == modal) {
+                fecharModal();
+            }
+        }
+
+        window.onload = () => {
+            listaPresentesDiv = document.getElementById('listaPresentes');
+            loaderLista = document.getElementById('loaderLista');
+            modal = document.getElementById('pixConfirmModal');
+            modalItemNameEl = document.getElementById('modalItemName');
+            modalItemValueEl = document.getElementById('modalItemValue');
+            modalPixKeyEl = document.getElementById('pix-key-display-modal');
+            modalFavorecidoNomeEl = document.getElementById('modalFavorecidoNome');
+            gifterNameInput = document.getElementById('gifterName');
+            hiddenItemIdInput = document.getElementById('hiddenItemId');
+            copyFeedbackModalEl = document.getElementById('copyFeedbackModal');
+            modalLoader = document.getElementById('modalLoader');
+            statusMessageEl = document.getElementById('statusMessage');
+
+            // console.log("Elementos do modal no onload:", {modalItemNameEl, modalItemValueEl, modalPixKeyEl, modalFavorecidoNomeEl});
+
+            if (modalFavorecidoNomeEl) {
+                 modalFavorecidoNomeEl.textContent = NOME_FAVORECIDO_PIX;
+            } else { console.error("Erro: Elemento 'modalFavorecidoNome' não encontrado!"); }
+
+            if (modalPixKeyEl) {
+                modalPixKeyEl.textContent = CHAVE_PIX_GLOBAL;
+            } else { console.error("Erro: Elemento 'pix-key-display-modal' não encontrado!"); }
+            
+            carregarItens();
+        };
+    </script>
+</body>
+</html>
